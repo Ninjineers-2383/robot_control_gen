@@ -1,50 +1,81 @@
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import icon from '../../assets/icon.svg';
 import './App.css';
+import { AppBar, Button, IconButton, Toolbar, Typography } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import Home from './pages/Home';
+import GroupEditor from './pages/GroupEditor';
 
-function Hello() {
-  return (
-    <div>
-      <div className="Hello">
-        <img width="200" alt="icon" src={icon} />
-      </div>
-      <h1>electron-react-boilerplate</h1>
-      <div className="Hello">
-        <a
-          href="https://electron-react-boilerplate.js.org/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              📚
-            </span>
-            Read our docs
-          </button>
-        </a>
-        <a
-          href="https://github.com/sponsors/electron-react-boilerplate"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="folded hands">
-              🙏
-            </span>
-            Donate
-          </button>
-        </a>
-      </div>
-    </div>
-  );
-}
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#363737',
+      contrastText: '#fff',
+    },
+    secondary: {
+      main: '#f9b51b',
+      contrastText: '#000',
+    },
+    background: {
+      default: '#363737',
+      // Set the default background for papper to be primary dark
+      paper: '#262727',
+    },
+  },
+  components: {
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          boxShadow: 'none',
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        root: {
+          color: '#fff',
+        },
+      },
+    },
+  },
+});
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Hello />} />
-      </Routes>
-    </Router>
+    <ThemeProvider theme={theme}>
+      <AppBar position="static">
+        <Toolbar>
+          <IconButton
+            size="large"
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            News
+          </Typography>
+          <Button color="inherit">Login</Button>
+        </Toolbar>
+      </AppBar>
+      <div className="main-content">
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route
+              path="/text"
+              element={
+                <Typography variant="h6" component="div">
+                  Test
+                </Typography>
+              }
+            />
+            <Route path="/edit/:group" element={<GroupEditor />} />
+          </Routes>
+        </Router>
+      </div>
+    </ThemeProvider>
   );
 }

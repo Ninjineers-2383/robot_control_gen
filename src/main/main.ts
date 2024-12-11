@@ -9,6 +9,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
+import fs from 'fs';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -29,6 +30,38 @@ ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
+});
+
+ipcMain.on('files', async (event, paths) => {
+  const filesPath = paths[0];
+  const files = fs.readdirSync(filesPath);
+
+  event.reply('files', files);
+});
+
+ipcMain.on('group', async (event, name) => {
+  event.reply(
+    'group',
+    fs.readFileSync(
+      path.join(
+        'C:\\Users\\lecom\\Documents\\repos\\2025_Base_robot\\src\\main\\deploy\\robotcontrol\\groups',
+        `${name}.group`,
+      ),
+      'utf8',
+    ),
+  );
+
+  console.log(name);
+});
+
+ipcMain.on('save-group', async (event, data) => {
+  fs.writeFileSync(
+    path.join(
+      'C:\\Users\\lecom\\Documents\\repos\\2025_Base_robot\\src\\main\\deploy\\robotcontrol\\groups',
+      `${data[0]}.group`,
+    ),
+    data[1],
+  );
 });
 
 if (process.env.NODE_ENV === 'production') {
