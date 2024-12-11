@@ -1,11 +1,14 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Button, IconButton, Typography } from '@mui/material';
-import { Add, ArrowDropDown } from '@mui/icons-material';
+import { Add, ArrowDropDown, Delete } from '@mui/icons-material';
 import { ReactSortable } from 'react-sortablejs';
 import ICommandGroup from '../../interfaces/ICommandGroup';
 import CommandCard from '../CommandCard';
-import ICommand from '../../interfaces/ICommand';
+import ICommand, {
+  CommandGroupTypes,
+  CommandTypes,
+} from '../../interfaces/ICommand';
 
 interface ICommandGroupProps {
   commandGroup: ICommandGroup;
@@ -13,17 +16,21 @@ interface ICommandGroupProps {
     commandGroupSupplier: (commandGroup: ICommandGroup[]) => ICommandGroup[],
   ) => void;
   commandIds: number[];
+  onDelete: (commandId: number[]) => void;
+  setChildren: (children: ICommand[], commandId: number[]) => void;
 }
 
 export default function CommandGroup({
   commandGroup,
   setCommandGroup,
   commandIds,
+  onDelete,
+  setChildren,
 }: ICommandGroupProps) {
   const [open, setOpen] = React.useState(false);
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
-  const handleAddCommand = (type: String) => {
+  const handleAddCommand = (type: CommandTypes) => {
     return () => {
       setOpen(false);
       let newCommand = {
@@ -48,36 +55,11 @@ export default function CommandGroup({
         };
       }
 
-      setCommandGroup((sourceList) => {
-        const tempList = [...sourceList];
-        const blockIds = [...commandIds];
-        const lastId = blockIds.pop();
-        let lastArr: ICommand[] = tempList;
-        // eslint-disable-next-line no-restricted-syntax
-        for (const id of blockIds) {
-          lastArr = lastArr.find((item) => item.id === id)?.data?.commands;
-        }
-        if (lastArr === undefined) {
-          throw new Error('lastArr is undefined');
-        }
-
-        const lastIndex = lastArr.findIndex((item) => item.id === lastId);
-
-        lastArr[lastIndex] = {
-          ...lastArr[lastIndex],
-          data: {
-            ...lastArr[lastIndex].data,
-            commands: [...lastArr[lastIndex].data.commands, newCommand],
-          },
-        };
-        return tempList;
-      });
+      setChildren([...commandGroup.data.commands, newCommand], commandIds);
     };
   };
 
-  const handleSetType = (
-    type: 'parallel' | 'race' | 'deadline' | 'sequential',
-  ) => {
+  const handleSetType = (type: CommandGroupTypes) => {
     return () => {
       setDropdownOpen(false);
 
@@ -180,6 +162,20 @@ export default function CommandGroup({
           >
             <Add />
           </IconButton>
+          {commandIds.length > 1 && (
+            <IconButton
+              color="error"
+              style={{
+                backgroundColor: 'darkgray',
+              }}
+              onClick={() => {
+                // only add a new command menu
+                onDelete(commandIds);
+              }}
+            >
+              <Delete />
+            </IconButton>
+          )}
         </div>
         <div
           role="button"
@@ -273,33 +269,7 @@ export default function CommandGroup({
       <div style={{ paddingLeft: '8px', paddingBottom: '4px' }}>
         <ReactSortable
           list={commandGroup.data.commands}
-          setList={(currentList) => {
-            setCommandGroup((sourceList) => {
-              const tempList = [...sourceList];
-              const blockIds = [...commandIds];
-              const lastId = blockIds.pop();
-              let lastArr: ICommand[] = tempList;
-              // eslint-disable-next-line no-restricted-syntax
-              for (const id of blockIds) {
-                lastArr = lastArr.find((item) => item.id === id)?.data
-                  ?.commands;
-              }
-              if (lastArr === undefined) {
-                throw new Error('lastArr is undefined');
-              }
-
-              const lastIndex = lastArr.findIndex((item) => item.id === lastId);
-
-              lastArr[lastIndex] = {
-                ...lastArr[lastIndex],
-                data: {
-                  ...lastArr[lastIndex].data,
-                  commands: currentList.filter((item) => item !== undefined),
-                },
-              };
-              return tempList;
-            });
-          }}
+          setList={(currentList) => setChildren(currentList, commandIds)}
           animation={150}
           ghostClass="ghost"
           fallbackOnBody
@@ -311,6 +281,8 @@ export default function CommandGroup({
               command={item}
               setCommandGroup={setCommandGroup}
               commandIds={[...commandIds, item.id as number]}
+              onDelete={onDelete}
+              setChildren={setChildren}
             />
           ))}
         </ReactSortable>

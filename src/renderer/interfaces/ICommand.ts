@@ -1,13 +1,9 @@
+export type CommandGroupTypes = 'sequential' | 'parallel' | 'race' | 'deadline';
+export type NonGroupCommandTypes = 'wait_until' | 'named' | 'wait';
+export type CommandTypes = NonGroupCommandTypes | CommandGroupTypes;
 export default interface ICommand {
   id: number;
-  type:
-    | 'wait_until'
-    | 'named'
-    | 'wait'
-    | 'sequential'
-    | 'parallel'
-    | 'race'
-    | 'deadline';
+  type: CommandTypes;
   data: any;
 }
 

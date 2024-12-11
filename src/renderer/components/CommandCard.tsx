@@ -10,12 +10,16 @@ interface ICommandProps {
     commandGroupSupplier: (commandGroup: ICommandGroup[]) => ICommandGroup[],
   ) => void;
   commandIds: number[];
+  onDelete: (commandIds: number[]) => void;
+  setChildren: (children: ICommand[], commandId: number[]) => void;
 }
 
 export default function CommandCard({
   command,
   setCommandGroup,
   commandIds,
+  onDelete,
+  setChildren,
 }: ICommandProps) {
   // Lighter grey for even rows, darker for odd rows
   const backgroundColor = commandIds.length % 2 === 0 ? '#f0f0f0' : '#e0e0e0';
@@ -25,7 +29,12 @@ export default function CommandCard({
       case 'wait':
         return <WaitCommand />;
       case 'named':
-        return <NamedCommand command={command as INamedCommand} />;
+        return (
+          <NamedCommand
+            command={command as INamedCommand}
+            onDelete={onDelete}
+          />
+        );
       case 'sequential':
       case 'deadline':
       case 'parallel':
@@ -35,6 +44,8 @@ export default function CommandCard({
             commandGroup={command as ICommandGroup}
             setCommandGroup={setCommandGroup}
             commandIds={commandIds}
+            setChildren={setChildren}
+            onDelete={onDelete}
           />
         );
       default:
