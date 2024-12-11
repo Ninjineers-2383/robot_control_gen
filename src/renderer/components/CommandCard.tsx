@@ -1,7 +1,8 @@
 import { Paper } from '@mui/material';
-import CommandGroup from './CommandGroup';
 import ICommandGroup from '../interfaces/ICommandGroup';
-import ICommand from '../interfaces/ICommand';
+import ICommand, { INamedCommand } from '../interfaces/ICommand';
+import { WaitCommand, CommandGroup } from './commands';
+import NamedCommand from './commands/NamedCommand';
 
 interface ICommandProps {
   command: ICommand;
@@ -16,21 +17,34 @@ export default function CommandCard({
   setCommandGroup,
   commandIds,
 }: ICommandProps) {
-  switch (command.type) {
-    case 'wait':
-      return <Paper>Wait for {command.data.seconds} seconds</Paper>;
-    case 'sequential':
-    case 'deadline':
-    case 'parallel':
-    case 'race':
-      return (
-        <CommandGroup
-          commandGroup={command as ICommandGroup}
-          setCommandGroup={setCommandGroup}
-          commandIds={commandIds}
-        />
-      );
-    default:
-      return <Paper>{command.type}</Paper>;
-  }
+  // Lighter grey for even rows, darker for odd rows
+  const backgroundColor = commandIds.length % 2 === 0 ? '#f0f0f0' : '#e0e0e0';
+
+  const commandRenderer = (() => {
+    switch (command.type) {
+      case 'wait':
+        return <WaitCommand />;
+      case 'named':
+        return <NamedCommand command={command as INamedCommand} />;
+      case 'sequential':
+      case 'deadline':
+      case 'parallel':
+      case 'race':
+        return (
+          <CommandGroup
+            commandGroup={command as ICommandGroup}
+            setCommandGroup={setCommandGroup}
+            commandIds={commandIds}
+          />
+        );
+      default:
+        return <div>Unknown command type: {command.type}</div>;
+    }
+  })();
+
+  return (
+    <Paper style={{ backgroundColor, margin: '8px 0 8px 0' }} elevation={5}>
+      {commandRenderer}
+    </Paper>
+  );
 }
