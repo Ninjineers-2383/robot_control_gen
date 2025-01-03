@@ -3,16 +3,18 @@ package com.robotcontrol.lib.builder;
 public class CommandParameter {
   protected enum Type {
     STRING,
-    INTEGER
+    NUMBER,
+    CONDITION,
+    COMMAND
   }
 
   protected final String value_str;
-  protected final int value_int;
+  protected final double value_double;
   protected final Type type;
 
-  protected CommandParameter(String string, int integer, Type type) {
+  protected CommandParameter(String string, double number, Type type) {
     value_str = string;
-    value_int = integer;
+    value_double = number;
     this.type = type;
   }
 
@@ -20,8 +22,8 @@ public class CommandParameter {
     return new CommandParameter(value, 0, Type.STRING);
   }
 
-  public static CommandParameter fromInt(int value) {
-    return new CommandParameter(null, value, Type.INTEGER);
+  public static CommandParameter fromNumber(String value) {
+    return new CommandParameter(null, Double.parseDouble(value), Type.NUMBER);
   }
 
   public String getString() {
@@ -31,18 +33,18 @@ public class CommandParameter {
     return value_str;
   }
 
-  public int getInt() {
-    if (type != Type.INTEGER) {
-      throw new IllegalStateException("Parameter is not an integer");
+  public double getNumber() {
+    if (type != Type.NUMBER) {
+      throw new IllegalStateException("Parameter is not a number");
     }
-    return value_int;
+    return value_double;
   }
 
   public boolean isString() {
     return type == Type.STRING;
   }
 
-  public boolean isInt() {
-    return type == Type.INTEGER;
+  public boolean isNumber() {
+    return type == Type.NUMBER;
   }
 }

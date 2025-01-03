@@ -10,8 +10,8 @@ import java.util.function.Function;
 
 /** Utility class for managing named commands */
 public class CustomCommands {
-  private static final HashMap<String, Function<CommandParameter[], Command>> customCommands =
-      new HashMap<>();
+  private static final HashMap<String, Function<HashMap<String, CommandParameter>, Command>>
+      customCommands = new HashMap<>();
 
   /**
    * Registers a command with the given name.
@@ -20,7 +20,7 @@ public class CustomCommands {
    * @param commandSupplier the command to register
    */
   public static void registerCommand(
-      String name, Function<CommandParameter[], Command> commandSupplier) {
+      String name, Function<HashMap<String, CommandParameter>, Command> commandSupplier) {
     customCommands.put(name, commandSupplier);
   }
 
@@ -30,7 +30,7 @@ public class CustomCommands {
    * @param commands the list of commands to register
    */
   public static void registerCommands(
-      List<Pair<String, Function<CommandParameter[], Command>>> commands) {
+      List<Pair<String, Function<HashMap<String, CommandParameter>, Command>>> commands) {
     for (var pair : commands) {
       registerCommand(pair.getFirst(), pair.getSecond());
     }
@@ -41,7 +41,8 @@ public class CustomCommands {
    *
    * @param commands the map of commands to register
    */
-  public static void registerCommands(Map<String, Function<CommandParameter[], Command>> commands) {
+  public static void registerCommands(
+      Map<String, Function<HashMap<String, CommandParameter>, Command>> commands) {
     customCommands.putAll(commands);
   }
 
@@ -62,7 +63,7 @@ public class CustomCommands {
    * @return the command with the given name, wrapped in a functional command, or a none command if
    *     it has not been registered
    */
-  public static Command getCommand(String name, CommandParameter... parameters) {
+  public static Command getCommand(String name, HashMap<String, CommandParameter> parameters) {
     if (hasCommand(name)) {
       try {
         return CommandUtil.wrappedEventCommand(customCommands.get(name).apply(parameters));

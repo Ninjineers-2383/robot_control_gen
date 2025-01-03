@@ -10,7 +10,7 @@
  */
 import path from 'path';
 import fs from 'fs';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -32,19 +32,44 @@ ipcMain.on('ipc-example', async (event, arg) => {
   event.reply('ipc-example', msgTemplate('pong'));
 });
 
-ipcMain.on('files', async (event, paths) => {
-  const filesPath = paths[0];
-  const files = fs.readdirSync(filesPath);
+ipcMain.on('load-project', async (event, project) => {
+  const groupPath = path.join(
+    project,
+    'src\\main\\deploy\\robotcontrol\\groups',
+  );
+  const configPath = path.join(
+    project,
+    'src\\main\\deploy\\robotcontrol\\config.json',
+  );
 
-  event.reply('files', files);
+  if (!fs.existsSync(groupPath)) {
+    fs.mkdirSync(groupPath);
+  }
+
+  if (!fs.existsSync(configPath)) {
+    fs.writeFileSync(configPath, JSON.stringify({}));
+  }
+
+  const groups = fs.readdirSync(groupPath);
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
+  event.reply('load-project', { groups, config });
 });
 
-ipcMain.on('group', async (event, name) => {
+ipcMain.on('save-config', async (event, data) => {
+  fs.writeFileSync(
+    path.join(data.project, 'src\\main\\deploy\\robotcontrol\\config.json'),
+    JSON.stringify(data.config),
+  );
+});
+
+ipcMain.on('group', async (event, name, project) => {
   event.reply(
     'group',
     fs.readFileSync(
       path.join(
-        'C:\\Users\\lecom\\Documents\\repos\\2025_Base_robot\\src\\main\\deploy\\robotcontrol\\groups',
+        project,
+        `src\\main\\deploy\\robotcontrol\\groups`,
         `${name}.group`,
       ),
       'utf8',
@@ -54,13 +79,78 @@ ipcMain.on('group', async (event, name) => {
   console.log(name);
 });
 
-ipcMain.on('save-group', async (event, data) => {
+ipcMain.on('save-group', async (event, name, project, data) => {
   fs.writeFileSync(
     path.join(
-      'C:\\Users\\lecom\\Documents\\repos\\2025_Base_robot\\src\\main\\deploy\\robotcontrol\\groups',
-      `${data[0]}.group`,
+      project,
+      'src\\main\\deploy\\robotcontrol\\groups',
+      `${name}.group`,
     ),
-    data[1],
+    data,
+  );
+});
+
+ipcMain.on('project', async (event) => {
+  // Open folder dialog
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory'],
+  });
+
+  if (result.canceled) {
+    event.reply('project', '');
+    return;
+  }
+
+  event.reply('project', result.filePaths[0]);
+});
+
+ipcMain.on('load-user-settings', async (event) => {
+  console.log(app.getPath('userData'));
+  event.reply(
+    'load-user-settings',
+    fs.readFileSync(
+      path.join(app.getPath('userData'), 'user-settings.json'),
+      'utf8',
+    ),
+  );
+});
+
+ipcMain.on('save-user-settings', async (event, data) => {
+  fs.writeFileSync(
+    path.join(app.getPath('userData'), 'user-settings.json'),
+    JSON.stringify(data),
+  );
+});
+
+ipcMain.on('rename-group', async (event, project, oldName, newName) => {
+  fs.renameSync(
+    path.join(
+      project,
+      'src\\main\\deploy\\robotcontrol\\groups',
+      `${oldName}.group`,
+    ),
+    path.join(
+      project,
+      'src\\main\\deploy\\robotcontrol\\groups',
+      `${newName}.group`,
+    ),
+  );
+});
+
+ipcMain.on('create-group', async (event, project, name) => {
+  fs.writeFileSync(
+    path.join(
+      project,
+      'src\\main\\deploy\\robotcontrol\\groups',
+      `${name}.group`,
+    ),
+    JSON.stringify({
+      id: 0,
+      type: 'sequential',
+      data: {
+        commands: [],
+      },
+    }),
   );
 });
 

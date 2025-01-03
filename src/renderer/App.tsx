@@ -1,10 +1,17 @@
+import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
-import { AppBar, Button, IconButton, Toolbar, Typography } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
+import { Button, Typography } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Home from './pages/Home';
 import GroupEditor from './pages/GroupEditor';
+import AppBar from './components/AppBar';
+import {
+  AppContext,
+  globalReducer,
+  GlobalState,
+} from './context/GlobalContext';
+import CommandEditor from './pages/CommandEditor';
 
 const theme = createTheme({
   palette: {
@@ -41,41 +48,79 @@ const theme = createTheme({
 });
 
 export default function App() {
+  const [globalState, updateGlobalState] = useReducer(globalReducer, {
+    groups: [],
+  } as GlobalState);
+
+  const context = useMemo(
+    () => ({ globalState, updateGlobalState }),
+    [globalState],
+  );
+
+  useEffect(() => {
+    window.electron.ipcRenderer.once('load-user-settings', (arg) => {
+      const settings = JSON.parse(arg as string);
+      updateGlobalState({ type: 'set-project', payload: settings.project });
+    });
+    window.electron.ipcRenderer.sendMessage('load-user-settings');
+  }, [updateGlobalState]);
+
+  useEffect(() => {
+    if (globalState.project === undefined) {
+      return;
+    }
+
+    window.electron.ipcRenderer.once('load-project', (arg) => {
+      updateGlobalState({ type: 'load-project', payload: arg });
+    });
+    window.electron.ipcRenderer.sendMessage(
+      'load-project',
+      globalState.project,
+    );
+  }, [globalState.project]);
+
+  const openProject = useCallback(() => {
+    window.electron.ipcRenderer.once('project', (arg) => {
+      updateGlobalState({ type: 'set-project', payload: arg });
+      window.electron.ipcRenderer.sendMessage('save-user-settings', {
+        project: arg as string,
+      });
+    });
+    window.electron.ipcRenderer.sendMessage('project');
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            News
-          </Typography>
-          <Button color="inherit">Login</Button>
-        </Toolbar>
-      </AppBar>
-      <div className="main-content">
-        <Router>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route
-              path="/text"
-              element={
-                <Typography variant="h6" component="div">
-                  Test
-                </Typography>
-              }
-            />
-            <Route path="/edit/:group" element={<GroupEditor />} />
-          </Routes>
-        </Router>
-      </div>
+      <AppContext.Provider value={context}>
+        <div className="main-content">
+          <Router>
+            <AppBar />
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <>
+                    <Button onClick={openProject} style={{ color: 'wheat' }}>
+                      Open Project
+                    </Button>
+                    <Home />
+                  </>
+                }
+              />
+              <Route
+                path="/text"
+                element={
+                  <Typography variant="h6" component="div">
+                    Test
+                  </Typography>
+                }
+              />
+              <Route path="/edit/:group" element={<GroupEditor />} />
+              <Route path="/commands" element={<CommandEditor />} />
+            </Routes>
+          </Router>
+        </div>
+      </AppContext.Provider>
     </ThemeProvider>
   );
 }

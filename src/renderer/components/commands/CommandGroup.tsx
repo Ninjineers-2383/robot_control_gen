@@ -4,7 +4,7 @@ import { Button, IconButton, Typography } from '@mui/material';
 import { Add, ArrowDropDown, Delete } from '@mui/icons-material';
 import { ReactSortable } from 'react-sortablejs';
 import ICommandGroup from '../../interfaces/ICommandGroup';
-import CommandCard from '../CommandCard';
+import { CommandCard } from '..';
 import ICommand, {
   CommandGroupTypes,
   CommandTypes,
@@ -266,7 +266,7 @@ export default function CommandGroup({
           </>
         )}
       </div>
-      <div style={{ paddingLeft: '8px', paddingBottom: '4px' }}>
+      <div style={{ padding: '0 8px 4px 8px', paddingBottom: '4px' }}>
         <ReactSortable
           list={commandGroup.data.commands}
           setList={(currentList) => setChildren(currentList, commandIds)}

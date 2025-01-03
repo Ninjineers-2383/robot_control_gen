@@ -33,6 +33,8 @@ export default function CommandCard({
           <NamedCommand
             command={command as INamedCommand}
             onDelete={onDelete}
+            commandIds={commandIds}
+            setCommandGroup={setCommandGroup}
           />
         );
       case 'sequential':

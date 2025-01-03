@@ -48,4 +48,6 @@ a:hover {
 
 .main-content {
   margin: 8px;
+  overflow-y: scroll;
+  height: calc(100vh - 16px);
 }

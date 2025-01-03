@@ -2,6 +2,7 @@ package com.robotcontrol.lib.builder;
 
 import edu.wpi.first.wpilibj2.command.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.function.BooleanSupplier;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -62,7 +63,25 @@ public class CommandUtil {
 
   private static Command namedCommandFromData(JSONObject dataJson) {
     String name = (String) dataJson.get("name");
-    return CustomCommands.getCommand(name);
+    JSONObject params = (JSONObject) dataJson.get("parameters");
+    HashMap<String, CommandParameter> parameters = new HashMap<>();
+    for (var key : params.keySet()) {
+      String keyString = (String) key;
+      var data = (JSONObject) params.get(key);
+
+      String value = (String) data.get("value");
+      String typeStr = (String) data.get("type");
+
+      switch (typeStr) {
+        case "string" -> parameters.put(keyString, CommandParameter.fromString(value));
+        case "number" -> parameters.put(keyString, CommandParameter.fromNumber(value));
+          // case CONDITION -> parameters.put(key, CommandParameter.fromCondition((String)
+          // value.get("value")));
+          // case COMMAND -> parameters.put(key, CommandParameter.fromCommand((JSONObject)
+          // value.get("value")));
+      }
+    }
+    return CustomCommands.getCommand(name, parameters);
   }
 
   private static Command sequentialGroupFromData(JSONObject dataJson)

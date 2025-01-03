@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import ICommandGroup from '../interfaces/ICommandGroup';
 import CommandCard from '../components/CommandCard';
 import ICommand from '../interfaces/ICommand';
+import { AppContext } from '../context/GlobalContext';
 
 export default function GroupEditor() {
+  const { globalState } = useContext(AppContext);
   const [group, setGroup] = useState<ICommandGroup[]>([]);
 
   const { group: groupName } = useParams();
@@ -16,15 +18,24 @@ export default function GroupEditor() {
       setGroup([commandGroup]);
     });
 
-    window.electron.ipcRenderer.sendMessage('group', groupName);
-  }, [groupName]);
+    window.electron.ipcRenderer.sendMessage(
+      'group',
+      groupName,
+      globalState.project,
+    );
+  }, [groupName, globalState.project]);
 
   useEffect(() => {
-    window.electron.ipcRenderer.sendMessage('save-group', [
+    if (group.length === 0) {
+      return;
+    }
+    window.electron.ipcRenderer.sendMessage(
+      'save-group',
       groupName,
+      globalState.project,
       JSON.stringify(group[0], null, 2),
-    ]);
-  }, [group, groupName]);
+    );
+  }, [group, groupName, globalState.project]);
 
   const setChildCommands = (
     childCommandList: ICommand[],
